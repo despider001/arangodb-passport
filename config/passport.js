@@ -5,12 +5,12 @@ module.exports = function(passport) {
 
     // used to serialize the user for the session
     passport.serializeUser(function(user, done) {
-		done(null, user.id);
+		done(null, user._key);
     });
 
     // used to deserialize the user
-    passport.deserializeUser(function(id, done) {
-        var Query = `For x IN user FILTER x._key == ${id} RETURN x`;
+    passport.deserializeUser(function(_key, done) {
+        var Query = `For x IN user FILTER x._key == ${_key} RETURN x`;
 
         db.query(Query).then(
             cursor => cursor.all()
@@ -33,7 +33,7 @@ module.exports = function(passport) {
     },
     function(req, email, password, done) {
 
-        var Query = `For x IN user FILTER x.email == ${email} RETURN x`;
+        var Query = `For x IN user FILTER x.email == '${email}' RETURN x`;
 
         db.query(Query).then(
             cursor => cursor.all()
@@ -42,7 +42,7 @@ module.exports = function(passport) {
                 if(keys.length > 0) {
                     return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
                 }else{
-                    
+
                     var newUser = new Object();
                     
                     newUser.email    = email;
@@ -54,7 +54,7 @@ module.exports = function(passport) {
                         password: newUser.password,
                         ldap: false
                     }, function(err, user) {
-                        newUser.id = user._key;
+                        newUser._key = user._key;
                         return done(null, newUser);
                     })
                 }
@@ -72,7 +72,7 @@ module.exports = function(passport) {
     },
     function(req, email, password, done) { // callback with email and password from our form
 
-        var Query = `For x IN user FILTER x.email == ${email} RETURN x`;
+        var Query = `For x IN user FILTER x.email == '${email}' RETURN x`;
 
         db.query(Query).then(
             cursor => cursor.all()
