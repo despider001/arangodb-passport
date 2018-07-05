@@ -13,7 +13,7 @@
         <input name="password" type="password" placeholder="password" value="123">
         <input type="submit" value="Login">
     </form>
-    <% if (message != 'undefined') { %>
+    <% if (typeof message != 'undefined') { %>
         <p><%= message %></p>
     <% } %>
     <br><br>
