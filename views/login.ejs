@@ -9,10 +9,13 @@
 <body>
     <h2>Please login to the secret app</h2>
     <form action="/login" method="post">
-        <input name="email" type="email" placeholder="email">
-        <input name="password" type="password" placeholder="password">
+        <input name="email" type="email" placeholder="email" value="sadiq@email.com">
+        <input name="password" type="password" placeholder="password" value="123">
         <input type="submit" value="Login">
     </form>
+    <% if (message != 'undefined') { %>
+        <p><%= message %></p>
+    <% } %>
     <br><br>
     <li><a href="/register">Register</a></li>
 </body>

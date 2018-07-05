@@ -7,11 +7,13 @@ var LocalStrategy = require('passport-local').Strategy;
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 });
+
 router.get('/secret', isLoggedIn, function(req, res, next) {
-  res.render('secret', { title: 'Express' });
+  res.render('secret');
 });
+
 router.get('/login', function(req, res, next) {
-  res.render('login');
+  res.render('login', { message: req.flash('loginMessage') });
 });
 
 router.post('/login', passport.authenticate('local-login', {
@@ -19,12 +21,12 @@ router.post('/login', passport.authenticate('local-login', {
   failureRedirect : '/login', 
   failureFlash : true
 }),
-function(req, res) {
+function(req, res, next) {
   res.redirect('/secret');
 });
 
 router.get('/register', function(req, res, next) {
-  res.render('register');
+  res.render('register', { message: req.flash('signupMessage') });
 });
 
 router.post('/register', passport.authenticate('local-signup', {
@@ -35,7 +37,7 @@ router.post('/register', passport.authenticate('local-signup', {
 
 router.get('/logout', function(req, res) {
   req.logout();
-  res.redirect('/');
+  res.redirect('/login');
 });
 
 // route middleware to make sure
@@ -46,7 +48,7 @@ function isLoggedIn(req, res, next) {
 		return next();
 
 	// if they aren't redirect them to the home page
-	res.redirect('/');
+	res.redirect('/login');
 }
 
 module.exports = router;

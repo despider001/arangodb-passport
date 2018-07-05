@@ -1,5 +1,8 @@
 var LocalStrategy = require('passport-local').Strategy;
 var db = require('./connection');
+
+var bcrypt = require('bcrypt');
+const saltRounds = 10;
 // expose this function to our app using module.exports
 module.exports = function(passport) {
 
@@ -10,17 +13,16 @@ module.exports = function(passport) {
 
     // used to deserialize the user
     passport.deserializeUser(function(_key, done) {
-        var Query = `For x IN user FILTER x._key == ${_key} RETURN x`;
-
+        var Query = `For x IN user FILTER x._key == '${_key}' RETURN x`;
         db.query(Query).then(
             cursor => cursor.all()
         ).then(
             (keys) => {
                 if(keys.length != 0) {
-                    done(err, keys[0]);
+                    done(null, keys[0]);
                 }
           },
-            err => done(err)
+          (err) =>{return done(err)} 
         ).catch(err=>console.log('Err in deserializeUser', err));
     });
 	
@@ -43,23 +45,26 @@ module.exports = function(passport) {
                     return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
                 }else{
 
-                    var newUser = new Object();
-                    
-                    newUser.email    = email;
-                    newUser.password = password; 
+                    bcrypt.hash(password, saltRounds, function(err, hash) {
 
-                    var collection = db.collection('user');
-                    collection.save({
-                        email: newUser.email,
-                        password: newUser.password,
-                        ldap: false
-                    }, function(err, user) {
-                        newUser._key = user._key;
-                        return done(null, newUser);
-                    })
+                        var newUser = {};
+                        newUser.email    = email;
+                        newUser.password = hash; 
+    
+                        var collection = db.collection('user');
+                        collection.save({
+                            email: newUser.email,
+                            password: newUser.password
+                        }, function(err, user) {
+                            newUser._key = user._key;
+                            return done(null, newUser);
+                        });
+
+                    });
+
                 }
           },
-            err => done(err)
+          (err) =>{return done(err)} 
         ).catch(err=>console.log('Err in register', err));
     }));
 
@@ -81,12 +86,19 @@ module.exports = function(passport) {
                 if(keys.length == 0) {
                     return done(null, false, req.flash('loginMessage', 'No user found.'));
                 }
-                if(keys[0].password != password) {
-                    return done(null, false, req.flash('loginMessage', 'Oops! Wrong password.'));
-                }
-                return done(null, keys[0]);		
+
+                bcrypt.compare(password, keys[0].password, function(err, res) {
+                    if(res === false) {
+                        return done(null, false, req.flash('loginMessage', 'Oops! Wrong password.'));
+                    }else{
+                        return done(null, keys[0]);	
+                    }
+                });
+	
           },
-            err => done(err)
+            (err) =>{
+                return done(err);
+            } 
         ).catch(err=>console.log('Err in login', err));
 
     }));
